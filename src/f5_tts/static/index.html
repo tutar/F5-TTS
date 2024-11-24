@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Test</title>
+    <script>
+        var ws;
+        var audioElement = null;
+
+        function openWebSocket() {
+            ws = new WebSocket("ws://127.0.0.1:8000/ws");
+
+            // ws.onopen = function() {
+            //     console.log('Connection open');
+            // };
+
+            ws.onopen = function() {
+                console.log('Connection open');
+                audioElement = new Audio(); // 创建Audio对象
+                audioElement.onended = function() {
+                    console.log('Audio playback finished');
+                };
+            };            
+
+            // ws.onmessage = function(event) {
+            //     console.log('Message from server:', event.data);
+            //     // 在这里处理从服务器接收到的消息
+            //     // 例如，将消息显示在页面上
+            //     document.getElementById('messages').textContent = event.data;
+            // };
+
+            ws.onmessage = function(event) {
+                if (event.data instanceof Blob) {
+                    // 处理从服务器接收到的音频Blob数据
+                    var url = URL.createObjectURL(event.data); // 创建音频URL
+                    audioElement.src = url; // 设置Audio对象的src属性
+                    audioElement.play(); // 开始播放音频
+                } else {
+                    console.log('Message from server:', event.data);
+                }
+            };
+
+            ws.onclose = function() {
+                console.log('Connection closed');
+            };
+
+            ws.onerror = function(error) {
+                console.log('WebSocket error:', error);
+            };
+        }
+
+        function sendMessage() {
+            var message = document.getElementById('messageInput').value;
+            ws.send(message);
+        }
+    </script>
+</head>
+<body onload="openWebSocket()">
+    <h1>WebSocket Test</h1>
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button onclick="sendMessage()">Send Message</button>
+    <!-- 用于显示消息或状态的区域 -->
+    <div id="messages"></div>
+    <!-- 音频播放控件 -->
+    <audio controls></audio>
+</body>
+</html>

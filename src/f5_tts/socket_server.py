@@ -30,7 +30,8 @@ class TTSStreamingProcessor:
         ).to(self.device, dtype=dtype)
 
         # Load the vocoder
-        self.vocoder = load_vocoder(is_local=False)
+        self.vocoder = load_vocoder(is_local=True,local_path="C:\\Users\\tutar\\.cache\\huggingface\\hub\\models--charactr--vocos-mel-24khz\\snapshots\\0feb3fdd929bcd6649e0e7c5a688cf7dd012ef21")
+        # self.vocoder = load_vocoder(is_local=False)
 
         # Set sampling rate for streaming
         self.sampling_rate = 24000  # Consistency with client
@@ -50,8 +51,29 @@ class TTSStreamingProcessor:
         gen_text = "Warm-up text for the model."
 
         # Pass the vocoder as an argument here
-        infer_batch_process((audio, sr), ref_text, [gen_text], self.model, self.vocoder, device=self.device)
+        # infer_batch_process((audio, sr), ref_text, [gen_text], self.model, self.vocoder, device=self.device)
         print("Warm-up completed.")
+
+    def generate_stream1(self, text, play_steps_in_s=0.5):
+        """Generate audio in chunks and yield them in real-time."""
+        # Preprocess the reference audio and text
+        ref_audio, ref_text = preprocess_ref_audio_text(self.ref_audio, self.ref_text)
+
+        # Load reference audio
+        audio, sr = torchaudio.load(ref_audio)
+
+        # Run inference for the input text
+        audio_chunk, target_sample_rate, _ = infer_batch_process(
+            (audio, sr),
+            ref_text,
+            [text],
+            self.model,
+            self.vocoder,
+            device=self.device,  # Pass vocoder here
+        )
+        return audio_chunk,target_sample_rate;
+
+
 
     def generate_stream(self, text, play_steps_in_s=0.5):
         """Generate audio in chunks and yield them in real-time."""
